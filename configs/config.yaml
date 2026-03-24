@@ -1,0 +1,34 @@
+# key-agent configuration file
+# Copy to ~/.key-agent/config.yaml
+
+# Server configuration
+server:
+  # Address to listen on (host:port)
+  addr: 127.0.0.1:8080
+
+# Storage configuration
+storage:
+  # Directory for data storage
+  data_dir: ~/.key-agent/data
+  # Database file name
+  db_name: key-agent.db
+
+# Security configuration
+security:
+  # Master key backend: auto, keyring, tpm, file
+  # auto: automatically select best available backend
+  master_key_backend: auto
+
+# Logging configuration
+logging:
+  # Log level: debug, info, warn, error
+  level: info
+  # Log file path (empty for stderr)
+  file: ""
+
+# MCP configuration
+mcp:
+  # Enable MCP server
+  enabled: true
+  # MCP endpoint path
+  endpoint: /mcp
