@@ -76,8 +76,22 @@ func TestMain(m *testing.M) {
 		daemonErr <- daemon.Run(ctx, cfg)
 	}()
 
-	// Wait for server to start
-	time.Sleep(1 * time.Second)
+	// Wait for server to be ready (poll health endpoint)
+	var ready bool
+	for i := 0; i < 30; i++ {
+		resp, err := http.Get(testAddr + "/health")
+		if err == nil {
+			resp.Body.Close()
+			ready = true
+			break
+		}
+		time.Sleep(100 * time.Millisecond)
+	}
+	if !ready {
+		fmt.Fprintf(os.Stderr, "Server failed to start within 3 seconds\n")
+		cancel()
+		os.Exit(1)
+	}
 
 	// Get root token from token file
 	tokenPath := filepath.Join(testDataDir, "token")

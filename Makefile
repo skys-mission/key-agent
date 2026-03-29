@@ -37,7 +37,7 @@ build-all:
 
 # Run tests
 test:
-	go test -race -cover -covermode=atomic -count=3 -shuffle=on -timeout=5m ./...
+	go test -race -cover -count=3 -shuffle=on -timeout=5m ./...
 
 # Run integration tests
 test-integration:
