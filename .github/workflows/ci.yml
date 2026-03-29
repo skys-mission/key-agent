@@ -7,7 +7,7 @@ on:
     branches: [main]
 
 env:
-  GO_VERSION: '1.22'
+  GO_VERSION: '1.25'
 
 jobs:
   lint:
@@ -25,6 +25,7 @@ jobs:
         uses: golangci/golangci-lint-action@v4
         with:
           version: latest
+          install-mode: goinstall
 
   test:
     name: Test
@@ -44,14 +45,13 @@ jobs:
         run: go mod download
 
       - name: Run tests
-        run: go test -race -cover -covermode=atomic -count=3 -shuffle=on -timeout=5m ./...
+        run: go test -race -cover -count=3 -shuffle=on -timeout=5m ./...
 
       - name: Upload coverage
         uses: codecov/codecov-action@v4
         if: matrix.os == 'ubuntu-latest'
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-          file: ./coverage.out
 
   build:
     name: Build
