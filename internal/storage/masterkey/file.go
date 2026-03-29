@@ -136,7 +136,13 @@ func (b *FileBackend) Delete() error {
 }
 
 // getPassphrase prompts the user for a passphrase.
+// If KEY_AGENT_PASSPHRASE environment variable is set, it uses that value.
 func (b *FileBackend) getPassphrase(prompt string) (string, error) {
+	// Check environment variable first
+	if passphrase := os.Getenv("KEY_AGENT_PASSPHRASE"); passphrase != "" {
+		return passphrase, nil
+	}
+
 	fmt.Print(prompt)
 	var passphrase string
 	_, err := fmt.Scanln(&passphrase)

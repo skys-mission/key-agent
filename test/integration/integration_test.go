@@ -25,6 +25,9 @@ var (
 
 // TestMain sets up the test environment.
 func TestMain(m *testing.M) {
+	// Set passphrase for file backend (needed in CI)
+	os.Setenv("KEY_AGENT_PASSPHRASE", "test-passphrase-for-ci")
+
 	// Create temp directory
 	var err error
 	testDataDir, err = os.MkdirTemp("", "key-agent-integration-*")
@@ -53,7 +56,7 @@ func TestMain(m *testing.M) {
 			DBName:  "test.db",
 		},
 		Security: config.SecurityConfig{
-			MasterKeyBackend: "auto",
+			MasterKeyBackend: "file",
 		},
 		Logging: config.LoggingConfig{
 			Level:      "warn",
