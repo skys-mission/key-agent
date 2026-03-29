@@ -33,12 +33,12 @@ func (h *TokenHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		case http.MethodPost:
 			h.create(w, r)
 		default:
-			writeError(w, http.StatusMethodNotAllowed, "METHOD_NOT_ALLOWED", "Method not allowed")
+			_ = writeError(w, http.StatusMethodNotAllowed, "METHOD_NOT_ALLOWED", "Method not allowed")
 		}
 		return
 	}
 
-	writeError(w, http.StatusNotFound, "NOT_FOUND", "Not found")
+	_ = writeError(w, http.StatusNotFound, "NOT_FOUND", "Not found")
 }
 
 // CreateTokenRequest represents the request body for creating a token.
@@ -61,12 +61,12 @@ type CreateTokenResponse struct {
 func (h *TokenHandler) create(w http.ResponseWriter, r *http.Request) {
 	var req CreateTokenRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeError(w, http.StatusBadRequest, "INVALID_ARGUMENT", "Invalid request body")
+		_ = writeError(w, http.StatusBadRequest, "INVALID_ARGUMENT", "Invalid request body")
 		return
 	}
 
 	if req.Name == "" {
-		writeError(w, http.StatusBadRequest, "INVALID_ARGUMENT", "Name is required")
+		_ = writeError(w, http.StatusBadRequest, "INVALID_ARGUMENT", "Name is required")
 		return
 	}
 
@@ -76,14 +76,14 @@ func (h *TokenHandler) create(w http.ResponseWriter, r *http.Request) {
 		tokenType = "client"
 	}
 	if tokenType != "client" && tokenType != "mcp" {
-		writeError(w, http.StatusBadRequest, "INVALID_ARGUMENT", "Invalid token type")
+		_ = writeError(w, http.StatusBadRequest, "INVALID_ARGUMENT", "Invalid token type")
 		return
 	}
 
 	// Generate token
 	token, err := generateToken()
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, "INTERNAL_ERROR", "Failed to generate token")
+		_ = writeError(w, http.StatusInternalServerError, "INTERNAL_ERROR", "Failed to generate token")
 		return
 	}
 
@@ -92,7 +92,7 @@ func (h *TokenHandler) create(w http.ResponseWriter, r *http.Request) {
 	if req.ExpiresIn != "" {
 		d, err := parseDuration(req.ExpiresIn)
 		if err != nil {
-			writeError(w, http.StatusBadRequest, "INVALID_ARGUMENT", "Invalid duration format")
+			_ = writeError(w, http.StatusBadRequest, "INVALID_ARGUMENT", "Invalid duration format")
 			return
 		}
 		t := time.Now().Add(d)
@@ -110,11 +110,11 @@ func (h *TokenHandler) create(w http.ResponseWriter, r *http.Request) {
 
 	tokenHash := common.HashToken(token)
 	if err := h.store.SetToken(r.Context(), tokenHash, meta); err != nil {
-		writeError(w, http.StatusInternalServerError, "INTERNAL_ERROR", "Failed to store token")
+		_ = writeError(w, http.StatusInternalServerError, "INTERNAL_ERROR", "Failed to store token")
 		return
 	}
 
-	writeJSON(w, http.StatusCreated, CreateTokenResponse{
+	_ = writeJSON(w, http.StatusCreated, CreateTokenResponse{
 		Token:     token,
 		Name:      req.Name,
 		Type:      tokenType,

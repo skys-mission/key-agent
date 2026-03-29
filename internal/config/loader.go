@@ -39,7 +39,7 @@ func Load() (*Config, error) {
 
 	// Load from config file (if exists)
 	if configFile == "" {
-		configFile = ConfigPath()
+		configFile = Path()
 	}
 	if err := loadFromFile(cfg, configFile); err != nil && !os.IsNotExist(err) {
 		return nil, fmt.Errorf("failed to load config file: %w", err)

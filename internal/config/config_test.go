@@ -176,14 +176,14 @@ func TestSaveAndLoad(t *testing.T) {
 func TestLoadFromEnv(t *testing.T) {
 	// Set environment variables
 	envVars := map[string]string{
-		"KEY_AGENT_ADDR":              "127.0.0.1:9999",
-		"KEY_AGENT_DATA_DIR":          "/env/data",
-		"KEY_AGENT_DB_NAME":           "env.db",
+		"KEY_AGENT_ADDR":               "127.0.0.1:9999",
+		"KEY_AGENT_DATA_DIR":           "/env/data",
+		"KEY_AGENT_DB_NAME":            "env.db",
 		"KEY_AGENT_MASTER_KEY_BACKEND": "tpm",
-		"KEY_AGENT_LOG_LEVEL":         "debug",
-		"KEY_AGENT_LOG_FILE":          "/env/log.txt",
-		"KEY_AGENT_MCP_ENABLED":       "false",
-		"KEY_AGENT_MCP_ENDPOINT":      "/env-mcp",
+		"KEY_AGENT_LOG_LEVEL":          "debug",
+		"KEY_AGENT_LOG_FILE":           "/env/log.txt",
+		"KEY_AGENT_MCP_ENABLED":        "false",
+		"KEY_AGENT_MCP_ENDPOINT":       "/env-mcp",
 	}
 
 	// Set env vars

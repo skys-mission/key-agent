@@ -148,9 +148,9 @@ func (b *FileBackend) getPassphrase(prompt string) (string, error) {
 
 // encryptedKeyFile holds the encrypted master key and its derivation parameters.
 type encryptedKeyFile struct {
-	Salt       string `json:"salt"`        // Base64 encoded salt
-	Nonce      string `json:"nonce"`       // Base64 encoded nonce
-	Ciphertext string `json:"ciphertext"`  // Base64 encoded encrypted key
+	Salt       string `json:"salt"`       // Base64 encoded salt
+	Nonce      string `json:"nonce"`      // Base64 encoded nonce
+	Ciphertext string `json:"ciphertext"` // Base64 encoded encrypted key
 }
 
 // encryptMasterKey encrypts the master key with a passphrase.

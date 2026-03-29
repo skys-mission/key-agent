@@ -14,26 +14,26 @@ type mockBackend struct {
 	delErr    error
 }
 
-func (m *mockBackend) Name() string           { return "mock" }
-func (m *mockBackend) Available() bool        { return m.available }
-func (m *mockBackend) Get() ([]byte, error)   { return m.key, m.getErr }
-func (m *mockBackend) Set(key []byte) error   { m.key = key; return m.setErr }
-func (m *mockBackend) Delete() error          { m.key = nil; return m.delErr }
+func (m *mockBackend) Name() string         { return "mock" }
+func (m *mockBackend) Available() bool      { return m.available }
+func (m *mockBackend) Get() ([]byte, error) { return m.key, m.getErr }
+func (m *mockBackend) Set(key []byte) error { m.key = key; return m.setErr }
+func (m *mockBackend) Delete() error        { m.key = nil; return m.delErr }
 
 func TestProvider_Get(t *testing.T) {
 	testKey := []byte("test-master-key-32-bytes-long")
 
 	tests := []struct {
-		name      string
-		backends  []Backend
-		wantKey   []byte
-		wantErr   error
+		name     string
+		backends []Backend
+		wantKey  []byte
+		wantErr  error
 	}{
 		{
-			name:      "get from first available backend",
-			backends:  []Backend{&mockBackend{available: true, key: testKey}},
-			wantKey:   testKey,
-			wantErr:   nil,
+			name:     "get from first available backend",
+			backends: []Backend{&mockBackend{available: true, key: testKey}},
+			wantKey:  testKey,
+			wantErr:  nil,
 		},
 		{
 			name: "skip unavailable backend, use second",
@@ -63,10 +63,10 @@ func TestProvider_Get(t *testing.T) {
 			wantErr: ErrKeyNotFound,
 		},
 		{
-			name:      "no backends",
-			backends:  []Backend{},
-			wantKey:   nil,
-			wantErr:   ErrKeyNotFound,
+			name:     "no backends",
+			backends: []Backend{},
+			wantKey:  nil,
+			wantErr:  ErrKeyNotFound,
 		},
 	}
 

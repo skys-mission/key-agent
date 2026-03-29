@@ -123,8 +123,8 @@ func (c *Config) TokenPath() string {
 	return filepath.Join(c.Storage.DataDir, "token")
 }
 
-// ConfigPath returns the default config file path.
-func ConfigPath() string {
+// Path returns the default config file path.
+func Path() string {
 	homeDir, _ := os.UserHomeDir()
 	return filepath.Join(homeDir, ".key-agent", "config.yaml")
 }

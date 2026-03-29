@@ -51,9 +51,9 @@ type SecretEntry struct {
 
 // TokenMeta holds metadata for an access token.
 type TokenMeta struct {
-	Name      string    `json:"name"`
-	Type      string    `json:"type"`     // client or mcp
-	CreatedAt time.Time `json:"created_at"`
+	Name      string     `json:"name"`
+	Type      string     `json:"type"` // client or mcp
+	CreatedAt time.Time  `json:"created_at"`
 	ExpiresAt *time.Time `json:"expires_at,omitempty"`
 }
 

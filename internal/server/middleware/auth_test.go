@@ -13,9 +13,9 @@ import (
 
 func TestExtractToken(t *testing.T) {
 	tests := []struct {
-		name        string
-		authHeader  string
-		wantToken   string
+		name       string
+		authHeader string
+		wantToken  string
 	}{
 		{"valid bearer token", "Bearer mytoken123", "mytoken123"},
 		{"lowercase bearer", "bearer mytoken123", "mytoken123"},

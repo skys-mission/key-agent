@@ -33,8 +33,8 @@ var (
 
 // Encryptor provides AES-256-GCM encryption and decryption.
 type Encryptor struct {
-	key   []byte
-	aead  cipher.AEAD
+	key  []byte
+	aead cipher.AEAD
 }
 
 // NewEncryptor creates a new Encryptor with the given key.

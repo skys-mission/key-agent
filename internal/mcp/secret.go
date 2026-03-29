@@ -5,8 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/skys-mission/key-agent/internal/storage"
 	mcp "github.com/modelcontextprotocol/go-sdk/mcp"
+	"github.com/skys-mission/key-agent/internal/storage"
 )
 
 func (s *Server) registerSecretTools() {

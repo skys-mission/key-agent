@@ -7,8 +7,8 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/skys-mission/key-agent/internal/storage"
 	mcp "github.com/modelcontextprotocol/go-sdk/mcp"
+	"github.com/skys-mission/key-agent/internal/storage"
 )
 
 // Server provides MCP server functionality.

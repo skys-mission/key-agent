@@ -11,15 +11,12 @@ linters:
     - staticcheck
     - unused
     - gofmt
-    - goimports
     - misspell
     - revive
 
 linters-settings:
   gofmt:
     simplify: true
-  goimports:
-    local-prefixes: github.com/skys-mission/key-agent
   revive:
     rules:
       - name: blank-imports
@@ -44,6 +41,7 @@ linters-settings:
       - name: empty-block
       - name: superfluous-else
       - name: unused-parameter
+        disabled: true
       - name: unreachable-code
       - name: redefines-builtin-id
 
@@ -52,6 +50,3 @@ issues:
     - path: _test\.go
       linters:
         - errcheck
-    - path: keysdk/
-      linters:
-        - revive

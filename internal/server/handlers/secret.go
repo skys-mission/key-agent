@@ -28,14 +28,14 @@ func (h *SecretHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		case http.MethodGet:
 			h.list(w, r)
 		default:
-			writeError(w, http.StatusMethodNotAllowed, "METHOD_NOT_ALLOWED", "Method not allowed")
+			_ = writeError(w, http.StatusMethodNotAllowed, "METHOD_NOT_ALLOWED", "Method not allowed")
 		}
 		return
 	}
 
 	key := strings.TrimPrefix(path, "/")
 	if key == "" {
-		writeError(w, http.StatusBadRequest, "INVALID_ARGUMENT", "Key is required")
+		_ = writeError(w, http.StatusBadRequest, "INVALID_ARGUMENT", "Key is required")
 		return
 	}
 
@@ -47,7 +47,7 @@ func (h *SecretHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	case http.MethodDelete:
 		h.delete(w, r, key)
 	default:
-		writeError(w, http.StatusMethodNotAllowed, "METHOD_NOT_ALLOWED", "Method not allowed")
+		_ = writeError(w, http.StatusMethodNotAllowed, "METHOD_NOT_ALLOWED", "Method not allowed")
 	}
 }
 
@@ -57,7 +57,7 @@ func (h *SecretHandler) list(w http.ResponseWriter, r *http.Request) {
 
 	keys, err := h.store.ListSecret(r.Context(), prefix)
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, "INTERNAL_ERROR", "Failed to list secrets")
+		_ = writeError(w, http.StatusInternalServerError, "INTERNAL_ERROR", "Failed to list secrets")
 		return
 	}
 
@@ -65,7 +65,7 @@ func (h *SecretHandler) list(w http.ResponseWriter, r *http.Request) {
 		keys = []string{}
 	}
 
-	writeJSON(w, http.StatusOK, map[string]interface{}{"keys": keys})
+	_ = writeJSON(w, http.StatusOK, map[string]interface{}{"keys": keys})
 }
 
 // get handles GET /api/v1/secrets/{key}.
@@ -73,14 +73,14 @@ func (h *SecretHandler) get(w http.ResponseWriter, r *http.Request, key string) 
 	entry, err := h.store.GetSecret(r.Context(), key)
 	if err != nil {
 		if err == storage.ErrNotFound {
-			writeError(w, http.StatusNotFound, "NOT_FOUND", "Secret not found")
+			_ = writeError(w, http.StatusNotFound, "NOT_FOUND", "Secret not found")
 			return
 		}
-		writeError(w, http.StatusInternalServerError, "INTERNAL_ERROR", "Failed to get secret")
+		_ = writeError(w, http.StatusInternalServerError, "INTERNAL_ERROR", "Failed to get secret")
 		return
 	}
 
-	writeJSON(w, http.StatusOK, entry)
+	_ = writeJSON(w, http.StatusOK, entry)
 }
 
 // SetSecretRequest represents the request body for setting a secret.
@@ -94,17 +94,17 @@ type SetSecretRequest struct {
 func (h *SecretHandler) set(w http.ResponseWriter, r *http.Request, key string) {
 	var req SetSecretRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeError(w, http.StatusBadRequest, "INVALID_ARGUMENT", "Invalid request body")
+		_ = writeError(w, http.StatusBadRequest, "INVALID_ARGUMENT", "Invalid request body")
 		return
 	}
 
 	if req.Value == "" {
-		writeError(w, http.StatusBadRequest, "INVALID_ARGUMENT", "Value is required")
+		_ = writeError(w, http.StatusBadRequest, "INVALID_ARGUMENT", "Value is required")
 		return
 	}
 
 	if req.Type == "" {
-		writeError(w, http.StatusBadRequest, "INVALID_ARGUMENT", "Type is required")
+		_ = writeError(w, http.StatusBadRequest, "INVALID_ARGUMENT", "Type is required")
 		return
 	}
 
@@ -118,7 +118,7 @@ func (h *SecretHandler) set(w http.ResponseWriter, r *http.Request, key string) 
 		storage.SecretTypeOther:       true,
 	}
 	if !validTypes[req.Type] {
-		writeError(w, http.StatusBadRequest, "INVALID_ARGUMENT", "Invalid secret type")
+		_ = writeError(w, http.StatusBadRequest, "INVALID_ARGUMENT", "Invalid secret type")
 		return
 	}
 
@@ -140,7 +140,7 @@ func (h *SecretHandler) set(w http.ResponseWriter, r *http.Request, key string) 
 	}
 
 	if err := h.store.SetSecret(r.Context(), entry); err != nil {
-		writeError(w, http.StatusInternalServerError, "INTERNAL_ERROR", "Failed to set secret")
+		_ = writeError(w, http.StatusInternalServerError, "INTERNAL_ERROR", "Failed to set secret")
 		return
 	}
 
@@ -152,7 +152,7 @@ func (h *SecretHandler) set(w http.ResponseWriter, r *http.Request, key string) 
 		status = http.StatusCreated
 	}
 
-	writeJSON(w, status, entry)
+	_ = writeJSON(w, status, entry)
 }
 
 // delete handles DELETE /api/v1/secrets/{key}.
@@ -160,10 +160,10 @@ func (h *SecretHandler) delete(w http.ResponseWriter, r *http.Request, key strin
 	err := h.store.DeleteSecret(r.Context(), key)
 	if err != nil {
 		if err == storage.ErrNotFound {
-			writeError(w, http.StatusNotFound, "NOT_FOUND", "Secret not found")
+			_ = writeError(w, http.StatusNotFound, "NOT_FOUND", "Secret not found")
 			return
 		}
-		writeError(w, http.StatusInternalServerError, "INTERNAL_ERROR", "Failed to delete secret")
+		_ = writeError(w, http.StatusInternalServerError, "INTERNAL_ERROR", "Failed to delete secret")
 		return
 	}
 
