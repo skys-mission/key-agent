@@ -1,7 +1,9 @@
 package masterkey
 
 import (
+	"encoding/base64"
 	"errors"
+	"os"
 	"testing"
 )
 
@@ -224,5 +226,91 @@ func TestFileBackend_Available(t *testing.T) {
 	b := NewFileBackend()
 	if !b.Available() {
 		t.Error("FileBackend should always be available")
+	}
+}
+
+func TestFileBackend_GetFromEnv(t *testing.T) {
+	// Test with valid master key from environment
+	validKey := make([]byte, 32)
+	for i := range validKey {
+		validKey[i] = byte(i)
+	}
+	validKeyBase64 := base64.StdEncoding.EncodeToString(validKey)
+
+	tests := []struct {
+		name     string
+		envValue string
+		wantKey  []byte
+		wantErr  bool
+		setEnv   bool
+	}{
+		{
+			name:    "no environment variable",
+			setEnv:  false,
+			wantErr: true,
+			wantKey: nil,
+		},
+		{
+			name:     "valid master key",
+			envValue: validKeyBase64,
+			setEnv:   true,
+			wantKey:  validKey,
+			wantErr:  false,
+		},
+		{
+			name:     "invalid base64",
+			envValue: "not-valid-base64!!!",
+			setEnv:   true,
+			wantErr:  true,
+		},
+		{
+			name:     "wrong key length",
+			envValue: base64.StdEncoding.EncodeToString([]byte("short")),
+			setEnv:   true,
+			wantErr:  true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Clean up
+			os.Unsetenv(EnvMasterKey)
+
+			if tt.setEnv {
+				os.Setenv(EnvMasterKey, tt.envValue)
+				defer os.Unsetenv(EnvMasterKey)
+			}
+
+			b := NewFileBackend()
+			key, err := b.getFromEnv()
+
+			if tt.wantErr {
+				if err == nil {
+					t.Error("getFromEnv() expected error, got nil")
+				}
+			} else {
+				if err != nil {
+					t.Errorf("getFromEnv() unexpected error: %v", err)
+				}
+				if string(key) != string(tt.wantKey) {
+					t.Errorf("getFromEnv() key = %v, want %v", key, tt.wantKey)
+				}
+			}
+		})
+	}
+}
+
+func TestFileBackend_Set_WithEnvMasterKey(t *testing.T) {
+	// When KEY_AGENT_MASTER_KEY is set, Set should be a no-op
+	os.Setenv(EnvMasterKey, base64.StdEncoding.EncodeToString(make([]byte, 32)))
+	defer os.Unsetenv(EnvMasterKey)
+
+	b := NewFileBackend()
+	testKey := []byte("test-master-key-32-bytes-long!!")
+
+	// Set should succeed without prompting
+	err := b.Set(testKey)
+	if err != nil {
+		t.Errorf("Set() with env master key should be no-op, got error: %v", err)
 	}
 }

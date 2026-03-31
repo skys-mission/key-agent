@@ -35,7 +35,26 @@
 
 ## 📦 安装
 
-### 从发布版本安装（推荐）
+### Docker（推荐快速开始）
+
+```bash
+# 使用 Docker Compose
+git clone https://github.com/skys-mission/key-agent.git
+cd key-agent
+docker compose up -d
+
+# 查看日志获取 root 令牌
+docker compose logs key-agent
+```
+
+**环境变量：**
+
+| 变量 | 描述 |
+|------|------|
+| `KEY_AGENT_MASTER_KEY` | Base64 编码的 32 字节主密钥 |
+| `KEY_AGENT_PASSPHRASE` | 加密主密钥文件的密码短语 |
+
+### 从发布版本安装
 
 ```bash
 # macOS / Linux
@@ -60,7 +79,24 @@ sudo make install
 
 ## 🚀 快速开始
 
-### 1. 启动守护进程
+### 方式一：Docker（最快）
+
+```bash
+# 克隆并启动
+git clone https://github.com/skys-mission/key-agent.git
+cd key-agent
+docker compose up -d
+
+# 检查服务健康状态
+curl http://127.0.0.1:8080/health
+
+# 查看日志获取 root 令牌
+docker logs key-agent
+```
+
+### 方式二：二进制文件
+
+#### 1. 启动守护进程
 
 ```bash
 key-agent
@@ -75,14 +111,14 @@ ka_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 ========================================
 ```
 
-### 2. 保存令牌
+#### 2. 保存令牌
 
 ```bash
 # 保存令牌供 CLI 使用
 keyctl token save ka_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 ```
 
-### 3. 存储和获取值
+#### 3. 存储和获取值
 
 ```bash
 # 存储键值对
@@ -97,7 +133,7 @@ keyctl kv get app/database/host
 keyctl kv list
 ```
 
-### 4. 存储密钥
+#### 4. 存储密钥
 
 ```bash
 # 存储 API 密钥
@@ -259,10 +295,9 @@ make build
 
 ## 📄 许可证
 
-[MIT 许可证](../LICENSE) © 2024-present skys-mission
+[MIT 许可证](../LICENSE) 
 
 ---
 
 <p align="center">
-  由 <a href="https://github.com/skys-mission">skys-mission</a> 用 ❤️ 制作
-</p>
+  95% Vibe Coding ✨ 

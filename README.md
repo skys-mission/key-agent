@@ -36,7 +36,31 @@
 
 ## 📦 Installation
 
-### From Release (Recommended)
+### Docker (Recommended for Quick Start)
+
+```bash
+# Using Docker Compose
+git clone https://github.com/skys-mission/key-agent.git
+cd key-agent
+
+# Generate a master key (recommended)
+export KEY_AGENT_MASTER_KEY=$(openssl rand -base64 32)
+
+# Start the service
+docker compose up -d
+
+# View logs to get root token
+docker logs key-agent
+```
+
+**Environment Variables:**
+
+| Variable | Description |
+|----------|-------------|
+| `KEY_AGENT_MASTER_KEY` | Base64-encoded 32-byte master key (recommended for Docker) |
+| `KEY_AGENT_PASSPHRASE` | Passphrase for encrypted master key file |
+
+### From Release
 
 ```bash
 # macOS / Linux
@@ -61,7 +85,24 @@ sudo make install
 
 ## 🚀 Quick Start
 
-### 1. Start the Daemon
+### Option 1: Docker (Fastest)
+
+```bash
+# Clone and start
+git clone https://github.com/skys-mission/key-agent.git
+cd key-agent
+docker compose up -d
+
+# Check service health
+curl http://127.0.0.1:8080/health
+
+# View logs to get root token
+docker logs key-agent
+```
+
+### Option 2: Binary
+
+#### 1. Start the Daemon
 
 ```bash
 key-agent
@@ -76,14 +117,14 @@ ka_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 ========================================
 ```
 
-### 2. Save Your Token
+#### 2. Save Your Token
 
 ```bash
 # Save token for CLI usage
 keyctl token save ka_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 ```
 
-### 3. Store and Retrieve Values
+#### 3. Store and Retrieve Values
 
 ```bash
 # Store a key-value pair
@@ -98,7 +139,7 @@ keyctl kv get app/database/host
 keyctl kv list
 ```
 
-### 4. Store Secrets
+#### 4. Store Secrets
 
 ```bash
 # Store an API key
@@ -261,10 +302,10 @@ make build
 
 ## 📄 License
 
-[MIT License](LICENSE) © 2024-present skys-mission
+[MIT License](LICENSE) 
 
 ---
 
 <p align="center">
-  Made with ❤️ by <a href="https://github.com/skys-mission">skys-mission</a>
+  95% Vibe Coding ✨ 
 </p>

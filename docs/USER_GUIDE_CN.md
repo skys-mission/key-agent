@@ -26,6 +26,58 @@ Key Agent 是一个本地守护进程，提供键值数据和密钥的安全存�
 
 ## 安装
 
+### Docker（推荐）
+
+使用 Docker 是运行 Key Agent 最简单的方式：
+
+```bash
+# 克隆仓库
+git clone https://github.com/skys-mission/key-agent.git
+cd key-agent
+
+# 使用 Docker Compose 启动
+docker compose up -d
+
+# 检查服务状态
+docker compose ps
+
+# 查看日志（首次运行包含 root 令牌）
+docker compose logs key-agent
+
+# 停止服务
+docker compose down
+```
+
+**Docker 配置说明：**
+
+`docker-compose.yml` 文件包含：
+- 数据卷持久化
+- 健康检查
+- 基于文件的主密钥后端（容器中必需）
+
+**环境变量：**
+
+| 变量 | 说明 |
+|------|------|
+| `KEY_AGENT_MASTER_KEY_BACKEND` | 容器中设置为 `file` |
+| `KEY_AGENT_PASSPHRASE` | 文件后端的密码短语（推荐设置） |
+
+**手动 Docker 运行：**
+
+```bash
+# 构建镜像
+docker build -t key-agent:latest .
+
+# 运行容器
+docker run -d \
+  --name key-agent \
+  -p 127.0.0.1:8080:8080 \
+  -v key-agent-data:/data \
+  -e KEY_AGENT_MASTER_KEY_BACKEND=file \
+  -e KEY_AGENT_PASSPHRASE=your-secure-passphrase \
+  key-agent:latest
+```
+
 ### 二进制下载
 
 从 [GitHub Releases](https://github.com/skys-mission/key-agent/releases) 下载最新版本：
