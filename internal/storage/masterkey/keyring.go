@@ -31,11 +31,20 @@ func (b *KeyringBackend) Name() string {
 
 // Available returns true if the OS keyring is accessible.
 func (b *KeyringBackend) Available() bool {
+	// If already determined to be unavailable, return false
+	if !b.available {
+		return false
+	}
+
 	// Try to access the keyring to check availability
 	// This is a lightweight check
 	_, err := keyring.Get(keyringService, keyringUser+"_check")
-	if err != nil && err != keyring.ErrNotFound {
-		// Keyring is not accessible
+	if err == keyring.ErrNotFound {
+		// Keyring is accessible, just no test key
+		return true
+	}
+	if err != nil {
+		// Any other error means keyring is not accessible (e.g., in container)
 		b.available = false
 		return false
 	}

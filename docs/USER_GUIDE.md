@@ -26,6 +26,58 @@ Key Agent is a local daemon that provides secure storage for key-value data and 
 
 ## Installation
 
+### Docker (Recommended)
+
+The easiest way to run Key Agent is using Docker:
+
+```bash
+# Clone the repository
+git clone https://github.com/skys-mission/key-agent.git
+cd key-agent
+
+# Start with Docker Compose
+docker compose up -d
+
+# Check service status
+docker compose ps
+
+# View logs (contains root token on first run)
+docker compose logs key-agent
+
+# Stop service
+docker compose down
+```
+
+**Docker Configuration:**
+
+The `docker-compose.yml` file includes:
+- Volume persistence for data
+- Health checks
+- File-based master key backend (required in containers)
+
+**Environment Variables:**
+
+| Variable | Description |
+|----------|-------------|
+| `KEY_AGENT_MASTER_KEY_BACKEND` | Set to `file` for containers |
+| `KEY_AGENT_PASSPHRASE` | Passphrase for file backend (recommended) |
+
+**Manual Docker Run:**
+
+```bash
+# Build image
+docker build -t key-agent:latest .
+
+# Run container
+docker run -d \
+  --name key-agent \
+  -p 127.0.0.1:8080:8080 \
+  -v key-agent-data:/data \
+  -e KEY_AGENT_MASTER_KEY_BACKEND=file \
+  -e KEY_AGENT_PASSPHRASE=your-secure-passphrase \
+  key-agent:latest
+```
+
 ### Binary Download
 
 Download the latest release from [GitHub Releases](https://github.com/skys-mission/key-agent/releases):

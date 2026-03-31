@@ -1,4 +1,4 @@
-.PHONY: build build-all test clean lint fmt help
+.PHONY: build build-all test clean lint fmt help docker docker-run
 
 VERSION ?= $(shell git describe --tags --always --dirty 2>/dev/null || echo "dev")
 COMMIT ?= $(shell git rev-parse --short HEAD 2>/dev/null || echo "unknown")
@@ -16,6 +16,8 @@ help:
 	@echo "  make lint         Run linter"
 	@echo "  make fmt          Format code"
 	@echo "  make clean        Clean build artifacts"
+	@echo "  make docker       Build Docker image"
+	@echo "  make docker-run   Run Docker container"
 
 # Build binaries
 build:
@@ -69,3 +71,21 @@ run:
 install:
 	CGO_ENABLED=0 go install $(LDFLAGS) ./cmd/key-agent
 	CGO_ENABLED=0 go install $(LDFLAGS) ./cmd/keyctl
+
+# Build Docker image
+docker:
+	docker build \
+		--build-arg VERSION=$(VERSION) \
+		--build-arg COMMIT=$(COMMIT) \
+		--build-arg DATE=$(DATE) \
+		-t key-agent:$(VERSION) \
+		-t key-agent:latest \
+		.
+
+# Run Docker container
+docker-run:
+	docker run -d --name key-agent \
+		-p 127.0.0.1:8080:8080 \
+		-v key-agent-data:/data \
+		-e KEY_AGENT_MASTER_KEY_BACKEND=file \
+		key-agent:latest

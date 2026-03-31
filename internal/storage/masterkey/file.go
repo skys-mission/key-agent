@@ -14,6 +14,18 @@ import (
 	"golang.org/x/crypto/scrypt"
 )
 
+// Environment variable names for master key configuration.
+const (
+	// EnvMasterKey is the environment variable for directly providing a master key.
+	// The value should be a base64-encoded 32-byte key.
+	// When set, it takes precedence over file-based storage.
+	EnvMasterKey = "KEY_AGENT_MASTER_KEY"
+
+	// EnvPassphrase is the environment variable for the passphrase used to
+	// encrypt/decrypt the master key file.
+	EnvPassphrase = "KEY_AGENT_PASSPHRASE"
+)
+
 const (
 	// Scrypt parameters for key derivation
 	scryptN = 32768 // CPU cost
@@ -22,7 +34,8 @@ const (
 	keyLen  = 32    // Derived key length
 
 	// File names
-	keyFileName = "master.key"
+	keyFileName        = "master.key"
+	passphraseFileName = ".passphrase" // Hidden file for auto-generated passphrase
 )
 
 // FileBackend stores the master key in an encrypted file.
@@ -51,14 +64,26 @@ func (b *FileBackend) Name() string {
 	return "file"
 }
 
-// Available always returns true for file backend.
+// Available returns true if either:
+// - KEY_AGENT_MASTER_KEY environment variable is set, or
+// - The backend can access the file system (always true for file backend).
 func (b *FileBackend) Available() bool {
+	// Environment variable takes precedence
+	if os.Getenv(EnvMasterKey) != "" {
+		return true
+	}
 	return true
 }
 
-// Get retrieves the master key from the encrypted file.
-// This requires the user's passphrase.
+// Get retrieves the master key.
+// Priority: KEY_AGENT_MASTER_KEY env > encrypted file.
 func (b *FileBackend) Get() ([]byte, error) {
+	// Check environment variable first (direct master key injection)
+	if key, err := b.getFromEnv(); err == nil {
+		return key, nil
+	}
+
+	// Fall back to file-based storage
 	keyPath := filepath.Join(b.dataDir, keyFileName)
 
 	data, err := os.ReadFile(keyPath)
@@ -89,26 +114,34 @@ func (b *FileBackend) Get() ([]byte, error) {
 }
 
 // Set stores the master key in an encrypted file.
-// This will prompt for a passphrase.
+// If KEY_AGENT_MASTER_KEY environment variable is set, this is a no-op
+// (the key is already provided via environment).
+// Otherwise, this will prompt for a passphrase (or auto-generate in non-interactive mode).
 func (b *FileBackend) Set(key []byte) error {
+	// If master key is provided via environment, skip file storage
+	if os.Getenv(EnvMasterKey) != "" {
+		return nil
+	}
+
 	if err := os.MkdirAll(b.dataDir, 0700); err != nil {
 		return err
 	}
 
-	// Prompt for passphrase
+	// Get passphrase (will auto-generate in non-interactive mode)
 	passphrase, err := b.getPassphrase("Enter new passphrase for master key: ")
 	if err != nil {
 		return err
 	}
 
-	// Confirm passphrase
-	confirm, err := b.getPassphrase("Confirm passphrase: ")
-	if err != nil {
-		return err
-	}
-
-	if passphrase != confirm {
-		return errors.New("passphrases do not match")
+	// Confirm passphrase only in interactive mode
+	if b.hasTTY() {
+		confirm, err := b.getPassphrase("Confirm passphrase: ")
+		if err != nil {
+			return err
+		}
+		if passphrase != confirm {
+			return errors.New("passphrases do not match")
+		}
 	}
 
 	encryptedKey, err := encryptMasterKey(key, passphrase)
@@ -137,19 +170,118 @@ func (b *FileBackend) Delete() error {
 
 // getPassphrase prompts the user for a passphrase.
 // If KEY_AGENT_PASSPHRASE environment variable is set, it uses that value.
+// If running in a container without TTY, it auto-generates and saves a passphrase.
 func (b *FileBackend) getPassphrase(prompt string) (string, error) {
 	// Check environment variable first
-	if passphrase := os.Getenv("KEY_AGENT_PASSPHRASE"); passphrase != "" {
+	if passphrase := os.Getenv(EnvPassphrase); passphrase != "" {
 		return passphrase, nil
 	}
 
+	// Try to read saved passphrase file (for container auto-generated passphrase)
+	savedPassphrase, err := b.readSavedPassphrase()
+	if err == nil && savedPassphrase != "" {
+		return savedPassphrase, nil
+	}
+
+	// Check if running in container without TTY (non-interactive)
+	if !b.hasTTY() {
+		// Auto-generate passphrase for container environment
+		return b.generateAndSavePassphrase()
+	}
+
+	// Interactive prompt
 	fmt.Print(prompt)
 	var passphrase string
-	_, err := fmt.Scanln(&passphrase)
+	_, err = fmt.Scanln(&passphrase)
 	if err != nil {
 		return "", err
 	}
 	return passphrase, nil
+}
+
+// getFromEnv retrieves the master key from KEY_AGENT_MASTER_KEY environment variable.
+// The value must be a base64-encoded 32-byte key.
+// Returns ErrKeyNotFound if not set or invalid.
+func (b *FileBackend) getFromEnv() ([]byte, error) {
+	envKey := os.Getenv(EnvMasterKey)
+	if envKey == "" {
+		return nil, ErrKeyNotFound
+	}
+
+	key, err := base64.StdEncoding.DecodeString(envKey)
+	if err != nil {
+		return nil, fmt.Errorf("invalid master key encoding: %w", err)
+	}
+
+	if len(key) != 32 {
+		return nil, fmt.Errorf("master key must be 32 bytes, got %d", len(key))
+	}
+
+	return key, nil
+}
+
+// hasTTY checks if the process has an interactive terminal.
+// Returns false in containers or non-interactive environments.
+func (b *FileBackend) hasTTY() bool {
+	// Check if running in a container
+	if _, err := os.Stat("/.dockerenv"); err == nil {
+		return false
+	}
+
+	// Check stdin for TTY
+	fi, err := os.Stdin.Stat()
+	if err != nil {
+		return false
+	}
+
+	// Check if stdin is a character device (interactive terminal)
+	if (fi.Mode() & os.ModeCharDevice) == 0 {
+		return false
+	}
+
+	// Also check if stdout is a TTY (for more reliable detection)
+	fo, err := os.Stdout.Stat()
+	if err != nil {
+		return false
+	}
+
+	return (fo.Mode() & os.ModeCharDevice) != 0
+}
+
+// readSavedPassphrase reads the auto-generated passphrase from file.
+func (b *FileBackend) readSavedPassphrase() (string, error) {
+	path := filepath.Join(b.dataDir, passphraseFileName)
+	data, err := os.ReadFile(path)
+	if os.IsNotExist(err) {
+		return "", nil
+	}
+	if err != nil {
+		return "", err
+	}
+	return string(data), nil
+}
+
+// generateAndSavePassphrase generates a random passphrase and saves it to file.
+func (b *FileBackend) generateAndSavePassphrase() (string, error) {
+	// Generate random passphrase
+	passphrase := make([]byte, 32)
+	if _, err := rand.Read(passphrase); err != nil {
+		return "", fmt.Errorf("failed to generate passphrase: %w", err)
+	}
+	encoded := base64.StdEncoding.EncodeToString(passphrase)
+
+	// Ensure directory exists
+	if err := os.MkdirAll(b.dataDir, 0700); err != nil {
+		return "", fmt.Errorf("failed to create data directory: %w", err)
+	}
+
+	// Save passphrase to file
+	path := filepath.Join(b.dataDir, passphraseFileName)
+	if err := os.WriteFile(path, []byte(encoded), 0600); err != nil {
+		return "", fmt.Errorf("failed to save passphrase: %w", err)
+	}
+
+	return encoded, nil
 }
 
 // encryptedKeyFile holds the encrypted master key and its derivation parameters.
