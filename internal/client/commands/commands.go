@@ -6,7 +6,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/skys-mission/keysdk"
+	"github.com/skys-mission/key-agent/keysdk"
 	"github.com/spf13/cobra"
 )
 

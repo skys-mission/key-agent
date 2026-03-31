@@ -14,7 +14,7 @@ import (
 
 	"github.com/skys-mission/key-agent/internal/config"
 	"github.com/skys-mission/key-agent/internal/daemon"
-	"github.com/skys-mission/keysdk"
+	"github.com/skys-mission/key-agent/keysdk"
 )
 
 var (

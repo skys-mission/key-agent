@@ -6,7 +6,7 @@ import (
 	"errors"
 	"time"
 
-	"github.com/skys-mission/keysdk"
+	"github.com/skys-mission/key-agent/keysdk"
 )
 
 // ErrNotFound is returned when an entry is not found.

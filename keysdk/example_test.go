@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"log"
 
-	keysdk "github.com/skys-mission/keysdk"
+	keysdk "github.com/skys-mission/key-agent/keysdk"
 )
 
 func ExampleNewClient() {
