@@ -4,7 +4,7 @@ go 1.25.0
 
 require (
 	github.com/modelcontextprotocol/go-sdk v0.3.0
-	github.com/skys-mission/keysdk v0.0.0
+	github.com/skys-mission/key-agent/keysdk v0.0.0
 	github.com/spf13/cobra v1.8.1
 	github.com/zalando/go-keyring v0.2.6
 	go.etcd.io/bbolt v1.4.3
@@ -13,7 +13,7 @@ require (
 	gopkg.in/yaml.v3 v3.0.1
 )
 
-replace github.com/skys-mission/keysdk => ./keysdk
+replace github.com/skys-mission/key-agent/keysdk => ./keysdk
 
 require (
 	al.essio.dev/pkg/shellescape v1.5.1 // indirect
