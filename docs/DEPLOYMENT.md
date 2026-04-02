@@ -353,7 +353,7 @@ netstat -ano | findstr :8080  # Windows
 chmod +x /usr/local/bin/key-agent
 
 # Ensure data directory is writable
-chmod 700 ~/.key-agent
+chmod 700 ~/.skys-mission/key-agent
 ```
 
 ### Master key issues

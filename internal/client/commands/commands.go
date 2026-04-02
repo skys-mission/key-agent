@@ -96,7 +96,7 @@ func init() {
 
 	tokenSaveCmd := &cobra.Command{
 		Use:   "save <token>",
-		Short: "Save token to default location (~/.key-agent/token)",
+		Short: "Save token to default location (~/.skys-mission/key-agent/data/token)",
 		Args:  cobra.ExactArgs(1),
 		Run:   tokenSave,
 	}
@@ -110,7 +110,7 @@ func init() {
 func kvGet(cmd *cobra.Command, args []string) {
 	key := args[0]
 	c := keysdk.NewClient(&keysdk.Config{
-		BaseURL: apiAddr,
+		BaseURL: getAPIAddr(),
 		Token:   getToken(),
 	})
 
@@ -134,7 +134,7 @@ func kvSet(cmd *cobra.Command, args []string) {
 	key := args[0]
 	value := args[1]
 	c := keysdk.NewClient(&keysdk.Config{
-		BaseURL: apiAddr,
+		BaseURL: getAPIAddr(),
 		Token:   getToken(),
 	})
 
@@ -154,7 +154,7 @@ func kvSet(cmd *cobra.Command, args []string) {
 func kvDelete(cmd *cobra.Command, args []string) {
 	key := args[0]
 	c := keysdk.NewClient(&keysdk.Config{
-		BaseURL: apiAddr,
+		BaseURL: getAPIAddr(),
 		Token:   getToken(),
 	})
 
@@ -170,7 +170,7 @@ func kvDelete(cmd *cobra.Command, args []string) {
 func kvList(cmd *cobra.Command, args []string) {
 	prefix, _ := cmd.Flags().GetString("prefix")
 	c := keysdk.NewClient(&keysdk.Config{
-		BaseURL: apiAddr,
+		BaseURL: getAPIAddr(),
 		Token:   getToken(),
 	})
 
@@ -191,7 +191,7 @@ func kvList(cmd *cobra.Command, args []string) {
 func secretGet(cmd *cobra.Command, args []string) {
 	key := args[0]
 	c := keysdk.NewClient(&keysdk.Config{
-		BaseURL: apiAddr,
+		BaseURL: getAPIAddr(),
 		Token:   getToken(),
 	})
 
@@ -216,7 +216,7 @@ func secretSet(cmd *cobra.Command, args []string) {
 	value := args[1]
 	secretType, _ := cmd.Flags().GetString("type")
 	c := keysdk.NewClient(&keysdk.Config{
-		BaseURL: apiAddr,
+		BaseURL: getAPIAddr(),
 		Token:   getToken(),
 	})
 
@@ -241,7 +241,7 @@ func secretSet(cmd *cobra.Command, args []string) {
 func secretDelete(cmd *cobra.Command, args []string) {
 	key := args[0]
 	c := keysdk.NewClient(&keysdk.Config{
-		BaseURL: apiAddr,
+		BaseURL: getAPIAddr(),
 		Token:   getToken(),
 	})
 
@@ -257,7 +257,7 @@ func secretDelete(cmd *cobra.Command, args []string) {
 func secretList(cmd *cobra.Command, args []string) {
 	prefix, _ := cmd.Flags().GetString("prefix")
 	c := keysdk.NewClient(&keysdk.Config{
-		BaseURL: apiAddr,
+		BaseURL: getAPIAddr(),
 		Token:   getToken(),
 	})
 
@@ -280,7 +280,7 @@ func tokenCreate(cmd *cobra.Command, args []string) {
 	tokenType, _ := cmd.Flags().GetString("type")
 	expiresIn, _ := cmd.Flags().GetString("expires-in")
 	c := keysdk.NewClient(&keysdk.Config{
-		BaseURL: apiAddr,
+		BaseURL: getAPIAddr(),
 		Token:   getToken(),
 	})
 
@@ -308,7 +308,7 @@ func tokenSave(cmd *cobra.Command, args []string) {
 		return
 	}
 
-	tokenPath := filepath.Join(homeDir, ".key-agent", "token")
+	tokenPath := filepath.Join(homeDir, ".skys-mission", "key-agent", "data", "token")
 	if err := os.MkdirAll(filepath.Dir(tokenPath), 0700); err != nil {
 		fmt.Fprintf(cmd.ErrOrStderr(), "Error: %v\n", err)
 		os.Exit(1)
@@ -324,15 +324,32 @@ func tokenSave(cmd *cobra.Command, args []string) {
 	fmt.Printf("Token saved to %s\n", tokenPath)
 }
 
-// getToken returns the token from flag or file.
+// getAPIAddr returns the effective API address.
+func getAPIAddr() string {
+	cfg, err := GetEffectiveConfig()
+	if err != nil {
+		return apiAddr // fallback to flag default
+	}
+	if cfg.Addr != "" {
+		return cfg.Addr
+	}
+	return apiAddr
+}
 func getToken() string {
-	if token != "" {
-		return token
+	// Try to load effective config
+	cfg, err := GetEffectiveConfig()
+	if err != nil {
+		// Fallback to just using global vars
+		cfg = &CLIConfig{Token: token, TokenFile: tokenFile}
+	}
+
+	if cfg.Token != "" {
+		return cfg.Token
 	}
 
 	// Try to read from specified token file
-	if tokenFile != "" {
-		data, err := os.ReadFile(tokenFile)
+	if cfg.TokenFile != "" {
+		data, err := os.ReadFile(cfg.TokenFile)
 		if err == nil {
 			return string(data)
 		}
@@ -341,7 +358,7 @@ func getToken() string {
 
 	// Try to read from default token file
 	homeDir, _ := os.UserHomeDir()
-	tokenPath := filepath.Join(homeDir, ".key-agent", "token")
+	tokenPath := filepath.Join(homeDir, ".skys-mission", "key-agent", "data", "token")
 	data, err := os.ReadFile(tokenPath)
 	if err == nil {
 		return string(data)

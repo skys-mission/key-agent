@@ -80,6 +80,36 @@ func Example_secretOperations() {
 	fmt.Printf("Secret value: %s\n", secret.Value)
 }
 
+func ExampleClient_GetStringOr() {
+	client := keysdk.NewClient(&keysdk.Config{
+		BaseURL: "http://127.0.0.1:8080",
+		Token:   "your-token-here",
+	})
+
+	// Get KV value with default fallback
+	debugMode := client.GetStringOr("app/debug", "false")
+	fmt.Printf("Debug mode: %s\n", debugMode)
+
+	// If key exists, returns actual value
+	// If key not found or error, returns default "false"
+}
+
+func ExampleClient_GetSecretStringOr() {
+	client := keysdk.NewClient(&keysdk.Config{
+		BaseURL: "http://127.0.0.1:8080",
+		Token:   "your-token-here",
+	})
+
+	// Get secret value with default fallback
+	dbPassword := client.GetSecretStringOr("db/password", "")
+	if dbPassword == "" {
+		fmt.Println("Using default empty password")
+	}
+
+	// If secret exists, returns actual value
+	// If secret not found or error, returns default ""
+}
+
 func Example_tokenOperations() {
 	client := keysdk.NewClient(&keysdk.Config{
 		Token: "your-root-token",

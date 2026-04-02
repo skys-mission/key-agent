@@ -108,13 +108,14 @@ make build
 
 | File | Location |
 |------|----------|
-| Config file | `~/.key-agent/config.yaml` |
-| Data directory | `~/.key-agent/data/` |
-| Token file | `~/.key-agent/data/token` |
+| Daemon config | `~/.skys-mission/key-agent/config.yaml` |
+| CLI config | `~/.skys-mission/key-agent/keyctl.yaml` |
+| Data directory | `~/.skys-mission/key-agent/data/` |
+| Token file | `~/.skys-mission/key-agent/data/token` |
 
 ### Configuration File
 
-Create `~/.key-agent/config.yaml`:
+Create `~/.skys-mission/key-agent/config.yaml`:
 
 ```yaml
 # Server settings
@@ -123,7 +124,7 @@ server:
 
 # Storage settings
 storage:
-  data_dir: "~/.key-agent/data"
+  data_dir: "~/.skys-mission/key-agent/data"
   db_name: "key-agent.db"
 
 # Security settings
@@ -154,6 +155,67 @@ mcp:
 | `keyring` | OS keyring (Keychain/Secret Service) | macOS, Linux |
 | `tpm` | Trusted Platform Module | Linux |
 | `file` | Encrypted file (less secure) | All |
+
+## CLI Configuration
+
+The `keyctl` CLI supports persistent configuration to avoid typing `--addr` and `--token` for every command.
+
+### Configuration File
+
+Location: `~/.skys-mission/key-agent/keyctl.yaml`
+
+### Configuration Commands
+
+```bash
+# Set default server address
+keyctl config set addr http://127.0.0.1:8080
+
+# Set default token
+keyctl config set token ka_xxxxxxxx...
+
+# Set token file path (alternative to inline token)
+keyctl config set token_file ~/.mytoken
+
+# Get a configuration value
+keyctl config get addr
+
+# List all configuration values
+keyctl config list
+```
+
+### Configuration Priority
+
+Configuration is resolved in the following priority (highest to lowest):
+
+1. **Command-line flags**: `--addr`, `--token`, `--token-file`
+2. **Environment variables**: `KEY_AGENT_ADDR`, `KEY_AGENT_TOKEN`
+3. **Config file**: `~/.skys-mission/key-agent/keyctl.yaml`
+
+### Environment Variables
+
+| Variable | Description |
+|----------|-------------|
+| `KEY_AGENT_ADDR` | Server address (e.g., `http://127.0.0.1:8080`) |
+| `KEY_AGENT_TOKEN` | API token for authentication |
+
+### Example Workflow
+
+```bash
+# 1. Start the daemon
+key-agent
+
+# 2. Save the root token from output
+# Root token: ka_abc123...
+
+# 3. Configure CLI once
+keyctl config set addr http://127.0.0.1:8080
+keyctl config set token ka_abc123...
+
+# 4. Use CLI without flags
+keyctl kv set mykey myvalue
+keyctl kv get mykey
+keyctl secret set db/password secret123 --type password
+```
 
 ## CLI Reference
 
@@ -501,7 +563,7 @@ For Claude Desktop or other MCP clients, add to your configuration:
 
 1. **Master key** - Use `keyring` backend when available
 2. **Backup** - Backup your data directory securely
-3. **File permissions** - Ensure `~/.key-agent/` has restrictive permissions (700)
+3. **File permissions** - Ensure `~/.skys-mission/key-agent/` has restrictive permissions (700)
 
 ## Troubleshooting
 
@@ -519,7 +581,7 @@ key-agent --log-level debug
 
 ```bash
 # Verify token is saved
-cat ~/.key-agent/data/token
+cat ~/.skys-mission/key-agent/data/token
 
 # Try with explicit token
 keyctl --token "ka_xxx" kv list
@@ -529,8 +591,8 @@ keyctl --token "ka_xxx" kv list
 
 ```bash
 # Fix permissions
-chmod 700 ~/.key-agent
-chmod 600 ~/.key-agent/data/token
+chmod 700 ~/.skys-mission/key-agent
+chmod 600 ~/.skys-mission/key-agent/data/token
 ```
 
 ### Keyring issues on Linux

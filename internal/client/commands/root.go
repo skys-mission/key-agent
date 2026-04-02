@@ -34,7 +34,7 @@ func Execute(v, c, d string) error {
 func init() {
 	rootCmd.PersistentFlags().StringVarP(&apiAddr, "addr", "a", "http://127.0.0.1:8080", "API server address")
 	rootCmd.PersistentFlags().StringVarP(&token, "token", "t", "", "API token")
-	rootCmd.PersistentFlags().StringVarP(&tokenFile, "token-file", "f", "", "Path to token file (default: ~/.key-agent/token)")
+	rootCmd.PersistentFlags().StringVarP(&tokenFile, "token-file", "f", "", "Path to token file (default: ~/.skys-mission/key-agent/data/token)")
 
 	rootCmd.AddCommand(versionCmd)
 	rootCmd.AddCommand(kvCmd)

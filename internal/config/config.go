@@ -85,13 +85,14 @@ type MCPConfig struct {
 // DefaultConfig returns the default configuration.
 func DefaultConfig() *Config {
 	homeDir, _ := os.UserHomeDir()
+	baseDir := filepath.Join(homeDir, ".skys-mission", "key-agent")
 
 	return &Config{
 		Server: ServerConfig{
 			Addr: "127.0.0.1:8080",
 		},
 		Storage: StorageConfig{
-			DataDir: filepath.Join(homeDir, ".key-agent", "data"),
+			DataDir: filepath.Join(baseDir, "data"),
 			DBName:  "key-agent.db",
 		},
 		Security: SecurityConfig{
@@ -126,5 +127,5 @@ func (c *Config) TokenPath() string {
 // Path returns the default config file path.
 func Path() string {
 	homeDir, _ := os.UserHomeDir()
-	return filepath.Join(homeDir, ".key-agent", "config.yaml")
+	return filepath.Join(homeDir, ".skys-mission", "key-agent", "config.yaml")
 }
