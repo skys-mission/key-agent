@@ -10,6 +10,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - MCP (Model Context Protocol) support for AI agent integration
+- **Go SDK (keysdk)**
+  - `GetStringOr(key, default)` - Get KV value with default fallback
+  - `GetSecretStringOr(key, default)` - Get secret value with default fallback
+- **CLI Configuration**
+  - Persistent configuration file at `~/.skys-mission/key-agent/keyctl.yaml`
+  - `keyctl config set/get/list` commands for managing settings
+  - Configuration priority: CLI flags > Environment variables > Config file
+  - Environment variables: `KEY_AGENT_ADDR`, `KEY_AGENT_TOKEN`
+
+### Changed
+
+- **BREAKING**: Configuration directory changed from `~/.key-agent/` to `~/.skys-mission/key-agent/`
+  - Daemon config: `~/.skys-mission/key-agent/config.yaml`
+  - CLI config: `~/.skys-mission/key-agent/keyctl.yaml`
+  - Data directory: `~/.skys-mission/key-agent/data/`
+  - Token file: `~/.skys-mission/key-agent/data/token`
 
 ## [0.1.0] - 2024-03-30
 

@@ -3,6 +3,7 @@
   <img src="https://img.shields.io/github/go-mod/go-version/skys-mission/key-agent" alt="Go Version">
   <img src="https://img.shields.io/github/license/skys-mission/key-agent" alt="License">
   <img src="https://img.shields.io/github/actions/workflow/status/skys-mission/key-agent/ci.yml?branch=main" alt="CI Status">
+  <img src="https://codecov.io/gh/skys-mission/key-agent/branch/main/graph/badge.svg" alt="Coverage">
 </p>
 
 <h1 align="center">🔑 Key Agent</h1>
@@ -38,21 +39,32 @@
 ### Docker（推荐快速开始）
 
 ```bash
-# 使用 Docker Compose
+# 1. 克隆并启动
 git clone https://github.com/skys-mission/key-agent.git
 cd key-agent
 docker compose up -d
 
-# 查看日志获取 root 令牌
-docker compose logs key-agent
+# 2. 从日志获取 root 令牌
+docker compose logs key-agent | grep "Root token"
+# 输出: Root token: ka_xxxxxxxx...
+
+# 3. 配置 CLI（一次性设置）
+keyctl config set addr http://127.0.0.1:8080
+keyctl config set token ka_xxxxxxxx...
+
+# 4. 测试
+keyctl kv set hello world
+keyctl kv get hello
 ```
 
-**环境变量：**
+**Docker 配置：**
 
 | 变量 | 描述 |
 |------|------|
 | `KEY_AGENT_MASTER_KEY` | Base64 编码的 32 字节主密钥 |
 | `KEY_AGENT_PASSPHRASE` | 加密主密钥文件的密码短语 |
+
+数据通过卷挂载存储在宿主机的 `~/.skys-mission/key-agent/data/` 目录。
 
 ### 从发布版本安装
 
@@ -96,7 +108,7 @@ docker logs key-agent
 
 ### 方式二：二进制文件
 
-#### 1. 启动守护进程
+#### 步骤 1：启动守护进程
 
 ```bash
 key-agent
@@ -111,14 +123,18 @@ ka_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 ========================================
 ```
 
-#### 2. 保存令牌
+#### 步骤 2：配置 CLI
 
 ```bash
-# 保存令牌供 CLI 使用
-keyctl token save ka_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+# 一次性配置
+keyctl config set addr http://127.0.0.1:8080
+keyctl config set token ka_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+
+# 验证配置
+keyctl config list
 ```
 
-#### 3. 存储和获取值
+#### 步骤 3：存储和获取值
 
 ```bash
 # 存储键值对
@@ -133,7 +149,7 @@ keyctl kv get app/database/host
 keyctl kv list
 ```
 
-#### 4. 存储密钥
+#### 步骤 4：存储密钥
 
 ```bash
 # 存储 API 密钥
@@ -236,14 +252,16 @@ mcp:
 
 ## ⚙️ 配置
 
-配置文件：`~/.key-agent/config.yaml`
+### 守护进程配置
+
+文件：`~/.skys-mission/key-agent/config.yaml`
 
 ```yaml
 server:
   addr: 127.0.0.1:8080
 
 storage:
-  data_dir: ~/.key-agent/data
+  data_dir: ~/.skys-mission/key-agent/data
   db_name: key-agent.db
 
 security:
@@ -262,6 +280,39 @@ mcp:
   enabled: true
   endpoint: /mcp
 ```
+
+### CLI 配置
+
+文件：`~/.skys-mission/key-agent/keyctl.yaml`
+
+一次性配置，随处使用：
+
+```bash
+# 设置默认服务器地址
+keyctl config set addr http://127.0.0.1:8080
+
+# 设置默认令牌
+keyctl config set token ka_xxxxxxxx...
+
+# 或设置令牌文件路径
+keyctl config set token_file ~/.mytoken
+
+# 查看当前配置
+keyctl config list
+```
+
+**配置优先级**（从高到低）：
+1. 命令行参数：`--addr`、`--token`
+2. 环境变量：`KEY_AGENT_ADDR`、`KEY_AGENT_TOKEN`
+3. 配置文件：`~/.skys-mission/key-agent/keyctl.yaml`
+
+**环境变量：**
+
+| 变量 | 说明 |
+|------|------|
+| `KEY_AGENT_ADDR` | 服务器地址（如 http://127.0.0.1:8080） |
+| `KEY_AGENT_TOKEN` | API 认证令牌 |
+| `KEY_AGENT_PASSPHRASE` | 文件主密钥密码短语 |
 
 ## 🛡️ 安全性
 

@@ -165,6 +165,15 @@ func (c *Client) ListKV(prefix string) ([]string, error) {
 	return result.Keys, err
 }
 
+// GetStringOr retrieves a KV value by key, returning defaultVal if not found or on error.
+func (c *Client) GetStringOr(key, defaultVal string) string {
+	entry, err := c.GetKV(key)
+	if err != nil {
+		return defaultVal
+	}
+	return entry.Value
+}
+
 // === Secret Operations ===
 
 // SecretType is the type of a secret.
@@ -223,6 +232,15 @@ func (c *Client) ListSecret(prefix string) ([]string, error) {
 	}
 	err := c.doRequestWithResponse(http.MethodGet, path, nil, &result)
 	return result.Keys, err
+}
+
+// GetSecretStringOr retrieves a secret value by key, returning defaultVal if not found or on error.
+func (c *Client) GetSecretStringOr(key, defaultVal string) string {
+	entry, err := c.GetSecret(key)
+	if err != nil {
+		return defaultVal
+	}
+	return entry.Value
 }
 
 // === Token Operations ===

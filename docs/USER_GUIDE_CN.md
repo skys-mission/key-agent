@@ -108,13 +108,14 @@ make build
 
 | 文件 | 位置 |
 |------|------|
-| 配置文件 | `~/.key-agent/config.yaml` |
-| 数据目录 | `~/.key-agent/data/` |
-| 令牌文件 | `~/.key-agent/data/token` |
+| 守护进程配置 | `~/.skys-mission/key-agent/config.yaml` |
+| CLI 配置 | `~/.skys-mission/key-agent/keyctl.yaml` |
+| 数据目录 | `~/.skys-mission/key-agent/data/` |
+| 令牌文件 | `~/.skys-mission/key-agent/data/token` |
 
 ### 配置文件
 
-创建 `~/.key-agent/config.yaml`：
+创建 `~/.skys-mission/key-agent/config.yaml`：
 
 ```yaml
 # 服务设置
@@ -123,7 +124,7 @@ server:
 
 # 存储设置
 storage:
-  data_dir: "~/.key-agent/data"
+  data_dir: "~/.skys-mission/key-agent/data"
   db_name: "key-agent.db"
 
 # 安全设置
@@ -154,6 +155,67 @@ mcp:
 | `keyring` | 系统密钥环（Keychain/Secret Service） | macOS, Linux |
 | `tpm` | 可信平台模块 | Linux |
 | `file` | 加密文件（安全性较低） | 所有 |
+
+## CLI 配置
+
+`keyctl` CLI 支持持久化配置，避免每次命令都输入 `--addr` 和 `--token`。
+
+### 配置文件位置
+
+文件路径：`~/.skys-mission/key-agent/keyctl.yaml`
+
+### 配置命令
+
+```bash
+# 设置默认服务器地址
+keyctl config set addr http://127.0.0.1:8080
+
+# 设置默认令牌
+keyctl config set token ka_xxxxxxxx...
+
+# 设置令牌文件路径（作为内联令牌的替代）
+keyctl config set token_file ~/.mytoken
+
+# 获取配置值
+keyctl config get addr
+
+# 列出所有配置
+keyctl config list
+```
+
+### 配置优先级
+
+配置按以下优先级解析（从高到低）：
+
+1. **命令行参数**：`--addr`、`--token`、`--token-file`
+2. **环境变量**：`KEY_AGENT_ADDR`、`KEY_AGENT_TOKEN`
+3. **配置文件**：`~/.skys-mission/key-agent/keyctl.yaml`
+
+### 环境变量
+
+| 变量 | 说明 |
+|------|------|
+| `KEY_AGENT_ADDR` | 服务器地址（如 `http://127.0.0.1:8080`） |
+| `KEY_AGENT_TOKEN` | API 认证令牌 |
+
+### 示例工作流
+
+```bash
+# 1. 启动守护进程
+key-agent
+
+# 2. 保存输出中的 root 令牌
+# Root token: ka_abc123...
+
+# 3. 一次性配置 CLI
+keyctl config set addr http://127.0.0.1:8080
+keyctl config set token ka_abc123...
+
+# 4. 无需参数即可使用 CLI
+keyctl kv set mykey myvalue
+keyctl kv get mykey
+keyctl secret set db/password secret123 --type password
+```
 
 ## CLI 命令参考
 
@@ -493,7 +555,7 @@ mcp:
 
 1. **主密钥** - 可用时使用 `keyring` 后端
 2. **备份** - 安全备份数据目录
-3. **文件权限** - 确保 `~/.key-agent/` 具有限制性权限 (700)
+3. **文件权限** - 确保 `~/.skys-mission/key-agent/` 具有限制性权限 (700)
 
 ## 故障排除
 
@@ -511,7 +573,7 @@ key-agent --log-level debug
 
 ```bash
 # 验证令牌已保存
-cat ~/.key-agent/data/token
+cat ~/.skys-mission/key-agent/data/token
 
 # 尝试显式指定令牌
 keyctl --token "ka_xxx" kv list
@@ -521,8 +583,8 @@ keyctl --token "ka_xxx" kv list
 
 ```bash
 # 修复权限
-chmod 700 ~/.key-agent
-chmod 600 ~/.key-agent/data/token
+chmod 700 ~/.skys-mission/key-agent
+chmod 600 ~/.skys-mission/key-agent/data/token
 ```
 
 ### Linux 上密钥环问题

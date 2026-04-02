@@ -53,12 +53,14 @@ docker compose up -d
 docker logs key-agent
 ```
 
-**Environment Variables:**
+**Docker Configuration:**
 
 | Variable | Description |
 |----------|-------------|
 | `KEY_AGENT_MASTER_KEY` | Base64-encoded 32-byte master key (recommended for Docker) |
 | `KEY_AGENT_PASSPHRASE` | Passphrase for encrypted master key file |
+
+Data is stored in `~/.skys-mission/key-agent/data/` on the host via volume mount.
 
 ### From Release
 
@@ -88,27 +90,33 @@ sudo make install
 ### Option 1: Docker (Fastest)
 
 ```bash
-# Clone and start
+# 1. Clone and start
 git clone https://github.com/skys-mission/key-agent.git
 cd key-agent
 docker compose up -d
 
-# Check service health
-curl http://127.0.0.1:8080/health
+# 2. Get root token from logs
+docker logs key-agent | grep "Root token"
+# Output: Root token: ka_xxxxxxxx...
 
-# View logs to get root token
-docker logs key-agent
+# 3. Configure CLI (one-time setup)
+keyctl config set addr http://127.0.0.1:8080
+keyctl config set token ka_xxxxxxxx...
+
+# 4. Test
+keyctl kv set hello world
+keyctl kv get hello
 ```
 
 ### Option 2: Binary
 
-#### 1. Start the Daemon
+#### Step 1: Start the Daemon
 
 ```bash
 key-agent
 ```
 
-On first run, a root token is generated and displayed. **Save this token securely!**
+On first run, a root token is generated. **Save this token!**
 
 ```
 ========================================
@@ -117,21 +125,25 @@ ka_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 ========================================
 ```
 
-#### 2. Save Your Token
+#### Step 2: Configure CLI
 
 ```bash
-# Save token for CLI usage
-keyctl token save ka_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+# Configure once, use everywhere
+keyctl config set addr http://127.0.0.1:8080
+keyctl config set token ka_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+
+# Verify configuration
+keyctl config list
 ```
 
-#### 3. Store and Retrieve Values
+#### Step 3: Store and Retrieve Values
 
 ```bash
-# Store a key-value pair
+# Store key-value pairs
 keyctl kv set app/database/host "localhost"
 keyctl kv set app/database/port "5432"
 
-# Retrieve a value
+# Retrieve values
 keyctl kv get app/database/host
 # Output: localhost
 
@@ -139,7 +151,7 @@ keyctl kv get app/database/host
 keyctl kv list
 ```
 
-#### 4. Store Secrets
+#### Step 4: Store Secrets
 
 ```bash
 # Store an API key
@@ -242,14 +254,16 @@ Configure your AI assistant to connect to `http://localhost:8080/mcp` with a val
 
 ## ⚙️ Configuration
 
-Configuration file: `~/.key-agent/config.yaml`
+### Daemon Configuration
+
+File: `~/.skys-mission/key-agent/config.yaml`
 
 ```yaml
 server:
   addr: 127.0.0.1:8080
 
 storage:
-  data_dir: ~/.key-agent/data
+  data_dir: ~/.skys-mission/key-agent/data
   db_name: key-agent.db
 
 security:
@@ -268,6 +282,39 @@ mcp:
   enabled: true
   endpoint: /mcp
 ```
+
+### CLI Configuration
+
+File: `~/.skys-mission/key-agent/keyctl.yaml`
+
+Configure once, use everywhere:
+
+```bash
+# Set default server address
+keyctl config set addr http://127.0.0.1:8080
+
+# Set default token
+keyctl config set token ka_xxxxxxxx...
+
+# Or set token file path
+keyctl config set token_file ~/.mytoken
+
+# View current configuration
+keyctl config list
+```
+
+**Configuration Priority** (highest to lowest):
+1. Command-line flags: `--addr`, `--token`
+2. Environment variables: `KEY_AGENT_ADDR`, `KEY_AGENT_TOKEN`
+3. Config file: `~/.skys-mission/key-agent/keyctl.yaml`
+
+**Environment Variables:**
+
+| Variable | Description |
+|----------|-------------|
+| `KEY_AGENT_ADDR` | Server address (e.g., http://127.0.0.1:8080) |
+| `KEY_AGENT_TOKEN` | API token for authentication |
+| `KEY_AGENT_PASSPHRASE` | Passphrase for file-based master key |
 
 ## 🛡️ Security
 
