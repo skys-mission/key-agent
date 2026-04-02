@@ -181,7 +181,7 @@ var configListCmd = &cobra.Command{
 		fmt.Printf("Config file: %s\n", ConfigPath())
 		fmt.Printf("  addr:       %s\n", cfg.Addr)
 		if cfg.Token != "" {
-			fmt.Printf("  token:      %s...\n", cfg.Token[:min(len(cfg.Token), 8)])
+			fmt.Printf("  token:      %s...\n", cfg.Token[:minInt(len(cfg.Token), 8)])
 		} else {
 			fmt.Printf("  token:      (not set)\n")
 		}
@@ -189,7 +189,7 @@ var configListCmd = &cobra.Command{
 	},
 }
 
-func min(a, b int) int {
+func minInt(a, b int) int {
 	if a < b {
 		return a
 	}
