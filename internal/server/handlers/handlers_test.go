@@ -317,3 +317,206 @@ func TestKVHandler_MethodNotAllowed(t *testing.T) {
 		t.Errorf("KVHandler status = %d, want %d", rec.Code, http.StatusMethodNotAllowed)
 	}
 }
+
+func TestSecretHandler_List(t *testing.T) {
+	store := newMockStore()
+	store.SetSecret(context.Background(), &storage.SecretEntry{
+		Entry: storage.Entry{Key: "secret1", Value: "v1"},
+		Type:  storage.SecretTypePassword,
+	})
+
+	handler := NewSecretHandler(store)
+
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/secrets", nil)
+	rec := httptest.NewRecorder()
+
+	handler.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Errorf("SecretHandler list status = %d, want %d", rec.Code, http.StatusOK)
+	}
+
+	var resp map[string][]string
+	json.NewDecoder(rec.Body).Decode(&resp)
+
+	if len(resp["keys"]) != 1 {
+		t.Errorf("SecretHandler list keys count = %d, want 1", len(resp["keys"]))
+	}
+}
+
+func TestSecretHandler_Get(t *testing.T) {
+	store := newMockStore()
+	store.SetSecret(context.Background(), &storage.SecretEntry{
+		Entry: storage.Entry{Key: "secret-key", Value: "secret-value"},
+		Type:  storage.SecretTypeAPIKey,
+	})
+
+	handler := NewSecretHandler(store)
+
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/secrets/secret-key", nil)
+	rec := httptest.NewRecorder()
+
+	handler.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Errorf("SecretHandler get status = %d, want %d", rec.Code, http.StatusOK)
+	}
+
+	var entry storage.SecretEntry
+	json.NewDecoder(rec.Body).Decode(&entry)
+
+	if entry.Key != "secret-key" {
+		t.Errorf("SecretHandler get key = %v, want secret-key", entry.Key)
+	}
+	if entry.Type != storage.SecretTypeAPIKey {
+		t.Errorf("SecretHandler get type = %v, want api_key", entry.Type)
+	}
+}
+
+func TestSecretHandler_GetNotFound(t *testing.T) {
+	store := newMockStore()
+	handler := NewSecretHandler(store)
+
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/secrets/nonexistent", nil)
+	rec := httptest.NewRecorder()
+
+	handler.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusNotFound {
+		t.Errorf("SecretHandler get status = %d, want %d", rec.Code, http.StatusNotFound)
+	}
+}
+
+func TestSecretHandler_Set(t *testing.T) {
+	store := newMockStore()
+	handler := NewSecretHandler(store)
+
+	body := bytes.NewBufferString(`{"value":"secret-value","type":"password"}`)
+	req := httptest.NewRequest(http.MethodPut, "/api/v1/secrets/new-secret", body)
+	req.Header.Set("Content-Type", "application/json")
+	rec := httptest.NewRecorder()
+
+	handler.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusCreated {
+		t.Errorf("SecretHandler set status = %d, want %d", rec.Code, http.StatusCreated)
+	}
+
+	var entry storage.SecretEntry
+	json.NewDecoder(rec.Body).Decode(&entry)
+
+	if entry.Key != "new-secret" {
+		t.Errorf("SecretHandler set key = %v, want new-secret", entry.Key)
+	}
+	if entry.Type != storage.SecretTypePassword {
+		t.Errorf("SecretHandler set type = %v, want password", entry.Type)
+	}
+}
+
+func TestSecretHandler_Delete(t *testing.T) {
+	store := newMockStore()
+	store.SetSecret(context.Background(), &storage.SecretEntry{
+		Entry: storage.Entry{Key: "delete-secret", Value: "value"},
+		Type:  storage.SecretTypePassword,
+	})
+
+	handler := NewSecretHandler(store)
+
+	req := httptest.NewRequest(http.MethodDelete, "/api/v1/secrets/delete-secret", nil)
+	rec := httptest.NewRecorder()
+
+	handler.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusNoContent {
+		t.Errorf("SecretHandler delete status = %d, want %d", rec.Code, http.StatusNoContent)
+	}
+}
+
+func TestTokenHandler_Create(t *testing.T) {
+	store := newMockStore()
+	handler := NewTokenHandler(store)
+
+	body := bytes.NewBufferString(`{"name":"test-token","type":"client"}`)
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/token", body)
+	req.Header.Set("Content-Type", "application/json")
+	rec := httptest.NewRecorder()
+
+	handler.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusCreated {
+		t.Errorf("TokenHandler create status = %d, want %d", rec.Code, http.StatusCreated)
+	}
+
+	var resp map[string]interface{}
+	json.NewDecoder(rec.Body).Decode(&resp)
+
+	if resp["name"] != "test-token" {
+		t.Errorf("TokenHandler create name = %v, want test-token", resp["name"])
+	}
+	if resp["token"] == "" {
+		t.Error("TokenHandler create token is empty")
+	}
+}
+
+func TestTokenHandler_MethodNotAllowed(t *testing.T) {
+	store := newMockStore()
+	handler := NewTokenHandler(store)
+
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/token", nil)
+	rec := httptest.NewRecorder()
+
+	handler.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusMethodNotAllowed {
+		t.Errorf("TokenHandler status = %d, want %d", rec.Code, http.StatusMethodNotAllowed)
+	}
+}
+
+func TestWriteJSON(t *testing.T) {
+	rec := httptest.NewRecorder()
+	data := map[string]string{"key": "value"}
+
+	err := writeJSON(rec, http.StatusOK, data)
+	if err != nil {
+		t.Errorf("writeJSON error = %v", err)
+	}
+
+	if rec.Code != http.StatusOK {
+		t.Errorf("writeJSON status = %d, want %d", rec.Code, http.StatusOK)
+	}
+
+	contentType := rec.Header().Get("Content-Type")
+	if contentType != "application/json" {
+		t.Errorf("writeJSON Content-Type = %v, want application/json", contentType)
+	}
+}
+
+func TestWriteError(t *testing.T) {
+	rec := httptest.NewRecorder()
+
+	err := writeError(rec, http.StatusBadRequest, "INVALID", "test error")
+	if err != nil {
+		t.Errorf("writeError error = %v", err)
+	}
+
+	if rec.Code != http.StatusBadRequest {
+		t.Errorf("writeError status = %d, want %d", rec.Code, http.StatusBadRequest)
+	}
+
+	var resp map[string]interface{}
+	json.NewDecoder(rec.Body).Decode(&resp)
+
+	errObj := resp["error"].(map[string]interface{})
+	if errObj["code"] != "INVALID" {
+		t.Errorf("writeError code = %v, want INVALID", errObj["code"])
+	}
+}
+
+func TestWriteNoContent(t *testing.T) {
+	rec := httptest.NewRecorder()
+	writeNoContent(rec)
+
+	if rec.Code != http.StatusNoContent {
+		t.Errorf("writeNoContent status = %d, want %d", rec.Code, http.StatusNoContent)
+	}
+}
