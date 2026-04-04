@@ -39,5 +39,6 @@ data/
 # AI development files
 .claude/
 CLAUDE.md
+AGENTS.md
 ai-docs/
 learn-project/
